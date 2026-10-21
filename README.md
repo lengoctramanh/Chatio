@@ -1,151 +1,203 @@
 # Chatio
 
-Chatio là hệ thống chat nội bộ trên nền web, hỗ trợ nhắn tin riêng, nhắn tin nhóm, gửi file và quản trị tài khoản. Project được xây dựng theo tài liệu SRS của nhóm, ưu tiên bảo vệ tài khoản, tin nhắn, file và cơ sở dữ liệu.
+Chatio là website chat nội bộ theo SRS đã chốt của nhóm, ưu tiên bảo vệ tài khoản, hội thoại, file và cơ sở dữ liệu. Phạm vi dự kiến là 50 tài khoản, khoảng 20 người dùng đồng thời; quản trị viên cấp tài khoản, không có đăng ký công khai. Giao diện được hoàn thiện sau khi chức năng và bảo mật đạt kiểm thử.
 
-## Mục tiêu
+## Công nghệ
 
-- Xây dựng website chat nội bộ cho nhóm/tổ chức.
-- Hỗ trợ đăng nhập, đăng xuất, đổi mật khẩu và quản trị tài khoản.
-- Hỗ trợ chat riêng, chat nhóm và gửi file.
-- Lưu lịch sử tin nhắn, tìm kiếm và ghi nhật ký hệ thống.
-- Đảm bảo các yêu cầu bảo mật cơ bản theo SRS.
-
-## Công nghệ sử dụng
-
-| Thành phần | Công nghệ |
-| --- | --- |
-| Frontend | React + Vite |
-| Giao diện | CSS thuần |
-| Backend | Node.js LTS + Express 5 |
-| Database | PostgreSQL |
-| Kết nối CSDL | pg |
-| Realtime chat | Socket.IO |
-| Quản lý mã nguồn | Git + GitHub |
+- Frontend: React, Vite, CSS thuần.
+- Backend: Node.js, Express 5, Socket.IO, `pg`.
+- Cơ sở dữ liệu: PostgreSQL.
+- Môi trường chạy: Docker Compose.
 
 ## Cấu trúc thư mục
 
 ```text
-chatio/
-├── backend/
-├── frontend/
+Chatio/
+├── backend/              # API và Socket.IO
+├── frontend/             # React và Vite
 ├── docs/
-│   ├── srs/
-│   ├── architecture/
-│   ├── database/
-│   └── testing/
+│   ├── architecture/     # Sơ đồ hệ thống
+│   ├── database/         # ERD và thiết kế CSDL
+│   ├── srs/              # SRS đã chốt
+│   └── testing/          # Test case và kết quả kiểm thử
+├── compose.yaml          # Tạo ở bước 4
 └── README.md
 ```
 
-Ý nghĩa:
+Các lệnh dưới đây dành cho **lần khởi tạo đầu tiên** khi `backend/` và `frontend/` còn trống. Chạy chúng trong PowerShell tại thư mục gốc `Chatio`. Nếu một thư mục đã có `package.json`, không chạy lại lệnh tạo ứng dụng trong thư mục đó.
 
-- `backend/`: mã nguồn máy chủ Node.js + Express.
-- `frontend/`: mã nguồn giao diện React + Vite.
-- `docs/srs/`: tài liệu yêu cầu hệ thống.
-- `docs/architecture/`: sơ đồ kiến trúc tổng thể, UML Component Diagram.
-- `docs/database/`: ERD và tài liệu thiết kế cơ sở dữ liệu.
-- `docs/testing/`: kế hoạch kiểm thử, test case và kết quả kiểm thử.
+## 1. Chuẩn bị
 
-## Quy tắc đặt nhánh
+Cài Node.js tương thích với Vite (Node 22.12+ hoặc Node 24), Docker Desktop có Docker Compose, Git và Visual Studio Code. Kiểm tra:
 
-Không làm trực tiếp trên nhánh `main`. Mỗi thành viên tạo nhánh riêng theo task.
-
-Quy tắc đặt tên:
-
-```text
-docs/tên-tài-liệu
-feature/tên-chức-năng
-fix/tên-lỗi
-test/tên-kiểm-thử
+```powershell
+node --version
+npm.cmd --version
+docker compose version
 ```
 
-Ví dụ:
+Tạo branch riêng từ `main` trước khi khởi tạo project:
 
-```text
-docs/system-architecture-diagram
-docs/database-erd
-feature/auth-login
-feature/private-chat
-feature/group-chat
-feature/file-upload
-feature/search-history
-feature/audit-log
-test/security-test-cases
+```powershell
+git switch -c chore/bootstrap-stack
 ```
 
-## Quy tắc commit
+## 2. Khởi tạo backend
 
-Commit cần ngắn gọn, rõ việc đã làm.
-
-Mẫu:
-
-```text
-<type>: <nội dung>
+```powershell
+Set-Location backend
+npm.cmd init -y
+npm.cmd install express@5 pg socket.io dotenv
+npm.cmd pkg set type=module "scripts.dev=node --watch src/server.js" "scripts.start=node src/server.js"
+New-Item -ItemType Directory -Force src
+Set-Location ..
 ```
 
-Các type thường dùng:
+Tạo `backend/src/server.js` để kiểm tra dịch vụ đã chạy:
 
-```text
-feat    thêm chức năng
-fix     sửa lỗi
-docs    tài liệu
-style   chỉnh giao diện hoặc định dạng
-test    kiểm thử
-chore   cấu hình hoặc việc phụ
+```js
+import express from 'express';
+
+const app = express();
+app.use(express.json());
+app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
+
+const port = Number(process.env.PORT ?? 3000);
+app.listen(port, '0.0.0.0', () => console.log(`Backend listening on ${port}`));
 ```
 
-Ví dụ:
+Đây mới là endpoint kiểm tra. API tài khoản, kiểm tra quyền và Socket.IO sẽ được thêm ở các task tiếp theo.
 
-```text
-docs: add system architecture diagram
-docs: add database erd
-feat: add login api
-feat: add private chat screen
-fix: validate uploaded file type
-test: add auth test cases
+## 3. Khởi tạo frontend
+
+```powershell
+Set-Location frontend
+npm.cmd create vite@latest . -- --template react
+npm.cmd install
+Set-Location ..
 ```
 
-## Quy trình làm việc nhóm
+Giữ các file React/Vite vừa tạo làm trang chạy thử ban đầu.
 
-Trước khi làm task mới:
+## 4. Tạo PostgreSQL và Docker Compose
 
-```bash
-git checkout main
-git pull origin main
-git checkout -b feature/tên-task
+Tạo file `.env` ở thư mục gốc, đặt một mật khẩu riêng đủ mạnh cho môi trường phát triển:
+
+```dotenv
+PG_ADMIN_PASSWORD=thay_bang_mat_khau_manh_cua_nhom
 ```
 
-Sau khi làm xong:
+Tạo `compose.yaml` ở thư mục gốc:
 
-```bash
-git add .
-git commit -m "feat: add feature name"
-git push origin feature/tên-task
+```yaml
+services:
+  db:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: chatio
+      POSTGRES_PASSWORD: ${PG_ADMIN_PASSWORD:?Set PG_ADMIN_PASSWORD in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    ports:
+      - '127.0.0.1:5432:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d chatio']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    image: node:24-alpine
+    working_dir: /app
+    volumes:
+      - ./backend:/app
+      - backend_node_modules:/app/node_modules
+    command: sh -c 'npm ci && npm run dev'
+    environment:
+      PORT: 3000
+    ports:
+      - '127.0.0.1:3000:3000'
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    image: node:24-alpine
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    command: sh -c 'npm ci && npm run dev -- --host 0.0.0.0'
+    ports:
+      - '127.0.0.1:5173:5173'
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  backend_node_modules:
+  frontend_node_modules:
 ```
 
-Sau đó tạo Pull Request trên GitHub để nhóm kiểm tra trước khi merge vào `main`.
+Tạo `.gitignore` ở thư mục gốc để tránh đưa file phát sinh và bí mật lên GitHub:
 
-## Phân công gợi ý cho nhóm 5 người
+```gitignore
+**/node_modules/
+**/dist/
+.env
+.env.*
+!.env.example
+uploads/
+```
 
-| Thành viên | Phụ trách gợi ý |
-| --- | --- |
-| Người 1 | Project lead, tài liệu, kiến trúc tổng thể |
-| Người 2 | Frontend React |
-| Người 3 | Backend Express API |
-| Người 4 | PostgreSQL, ERD, truy vấn dữ liệu |
-| Người 5 | Socket.IO, file upload, testing |
+Có thể tạo `.env.example` chỉ chứa tên biến và giá trị mẫu, không chứa mật khẩu thật. Mật khẩu `POSTGRES_PASSWORD` dùng để khởi tạo tài khoản quản trị PostgreSQL; backend **không được dùng tài khoản này** khi triển khai truy vấn ứng dụng. Tạo tài khoản CSDL quyền tối thiểu sau khi nhóm chốt ERD và migration.
 
-## Tài liệu cần hoàn thành
+## 5. Chạy và kiểm tra
 
-- SRS hệ thống chat nội bộ.
-- UML Component Diagram cho kiến trúc tổng thể.
-- ERD cho cơ sở dữ liệu.
-- Test plan và test case.
-- Hướng dẫn cài đặt, chạy project và bàn giao.
+Mở Docker Desktop, sau đó chạy ở thư mục gốc:
 
-## Ghi chú bảo mật
+```powershell
+docker compose config
+docker compose up -d
+docker compose ps
+```
 
-- Không lưu mật khẩu thô.
-- Không commit file `.env`.
-- Không đưa mật khẩu, token hoặc thông tin bí mật lên GitHub.
-- File người dùng tải lên phải được kiểm tra định dạng, dung lượng và quyền truy cập.
-- Người dùng chỉ được xem dữ liệu mà họ có quyền.
+Kiểm tra backend tại <http://localhost:3000/api/health> (phải trả `{"status":"ok"}`) và frontend tại <http://localhost:5173/>. Xem lỗi nếu dịch vụ chưa chạy:
+
+```powershell
+docker compose logs backend
+docker compose logs frontend
+docker compose logs db
+```
+
+DBeaver có thể kết nối PostgreSQL khi phát triển với host `localhost`, port `5432`, database `chatio`, user `postgres` và mật khẩu trong `.env`. Dừng các dịch vụ bằng `docker compose down`; volume `postgres_data` giữ dữ liệu giữa các lần chạy. Không dùng `docker compose down -v` nếu muốn giữ dữ liệu.
+
+## 6. Việc tiếp theo sau khi bộ khung chạy được
+
+1. Chốt ERD, tạo migration và tài khoản CSDL chỉ có quyền cần thiết.
+2. Làm đăng nhập, phiên có thể thu hồi và phân quyền trên từng API/Socket.IO.
+3. Làm chat riêng, chat nhóm, lịch sử, tìm kiếm và xử lý gửi lại không trùng tin.
+4. Làm file ngoài webroot, nhật ký bảo mật, mã hóa dữ liệu lưu trữ và sao lưu.
+5. Kiểm thử theo SRS trước khi dùng trong mạng nội bộ.
+
+Bộ khung ở trên phục vụ chạy thử cục bộ. Khi triển khai theo SRS, cần HTTPS, cookie an toàn, tài khoản CSDL quyền tối thiểu, kiểm tra quyền ở backend và sao lưu mã hóa.
+
+## Quy trình nộp code
+
+Không commit trực tiếp lên `main`. Sau khi kiểm tra bộ khung chạy được, chỉ thêm các file mã nguồn và cấu hình không chứa bí mật:
+
+```powershell
+git add README.md .gitignore compose.yaml backend frontend
+git commit -m "chore: bootstrap frontend backend and compose"
+git push -u origin chore/bootstrap-stack
+```
+
+Tạo Pull Request vào `main`, gửi link PR và kết quả chạy thử cho một thành viên khác kiểm tra trước khi merge.
+
+## Tài liệu tham khảo
+
+- [Vite Getting Started](https://vite.dev/guide/)
+- [Express 5 installation](https://expressjs.com/en/guide/migrating-5/)
+- [Docker Compose Quickstart](https://docs.docker.com/compose/gettingstarted/)
+- [PostgreSQL Docker image](https://hub.docker.com/_/postgres)
