@@ -24,7 +24,7 @@ Chatio/
 └── README.md
 ```
 
-Các lệnh dưới đây dành cho **lần khởi tạo đầu tiên** khi `backend/` và `frontend/` còn trống. Chạy chúng trong PowerShell tại thư mục gốc `Chatio`. Nếu một thư mục đã có `package.json`, không chạy lại lệnh tạo ứng dụng trong thư mục đó.
+Các lệnh dưới đây dành cho **lần khởi tạo đầu tiên** khi `backend/` và `frontend/` chưa có hoặc còn trống. Chạy chúng trong PowerShell tại thư mục gốc `Chatio`. Nếu một thư mục đã có `package.json`, không chạy lại lệnh tạo ứng dụng trong thư mục đó.
 
 ## 1. Chuẩn bị
 
@@ -36,13 +36,20 @@ npm.cmd --version
 docker compose version
 ```
 
-Tạo branch riêng từ `main` trước khi khởi tạo project:
+Kiểm tra branch hiện tại. Nếu đã ở branch dành cho việc khởi tạo project thì dùng tiếp branch đó; chỉ tạo branch mới khi đang ở `main`:
 
 ```powershell
-git switch -c chore/bootstrap-stack
+git branch --show-current
+# Nếu kết quả là main, chạy: git switch -c chore/init-project
 ```
 
 ## 2. Khởi tạo backend
+
+Tạo thư mục nếu chưa có:
+
+```powershell
+New-Item -ItemType Directory -Force backend, frontend
+```
 
 ```powershell
 Set-Location backend
@@ -190,7 +197,7 @@ Không commit trực tiếp lên `main`. Sau khi kiểm tra bộ khung chạy đ
 ```powershell
 git add README.md .gitignore compose.yaml backend frontend
 git commit -m "chore: bootstrap frontend backend and compose"
-git push -u origin chore/bootstrap-stack
+git push -u origin HEAD
 ```
 
 Tạo Pull Request vào `main`, gửi link PR và kết quả chạy thử cho một thành viên khác kiểm tra trước khi merge.
