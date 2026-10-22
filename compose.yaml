@@ -1,0 +1,55 @@
+services:
+  db:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: chatio
+      POSTGRES_PASSWORD: ${PG_ADMIN_PASSWORD:?Set PG_ADMIN_PASSWORD in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d chatio"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    image: node:24-alpine
+    working_dir: /app
+    volumes:
+      - ./backend:/app
+      - backend_node_modules:/app/node_modules
+    command: ["sh", "-c", "npm ci && npm run dev"]
+    environment:
+      PORT: 3000
+      PGHOST: db
+      PGPORT: 5432
+      PGDATABASE: chatio
+      PGUSER: chatio_app
+      PGPASSWORD: ${PG_APP_PASSWORD:?Set PG_APP_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    image: node:24-alpine
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    command: ["sh", "-c", "npm ci && npm run dev -- --host 0.0.0.0"]
+    environment:
+      API_PROXY_TARGET: http://backend:3000
+    ports:
+      - "127.0.0.1:5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  backend_node_modules:
+  frontend_node_modules:
