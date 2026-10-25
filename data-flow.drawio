@@ -1,0 +1,285 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="Trang-1" id="2EqLvzI501WkiZ3T9f4d">
+    <mxGraphModel dx="2495" dy="1370" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <UserObject label="" plantUmlData="{&#xa;  &quot;data&quot;: &quot;@startuml\ntitle Data Flow Diagram (DFD Level 1) - Chatio System\n\n&#39; Actors &amp; Boundaries\nactor \&quot;User / Browser\&quot; as User\nagent \&quot;TRUST BOUNDARY\\n(Client / Server)\&quot; as TrustBoundary\n\n&#39; Processes\nnode \&quot;1.0 Authentication &amp; Session\&quot; as P1\nnode \&quot;2.0 Messaging Service\&quot; as P2\nnode \&quot;3.0 File Management\&quot; as P3\nnode \&quot;4.0 Audit Logging\&quot; as P4\nnode \&quot;5.0 Backup &amp; Recovery\&quot; as P5\n\n&#39; Data Stores\ndatabase \&quot;D1: PostgreSQL DB\&quot; as D1\ndatabase \&quot;D2: Safe File Storage (uploads/)\&quot; as D2\ndatabase \&quot;D3: Audit Logs (logs/)\&quot; as D3\ndatabase \&quot;D4: Encrypted Backups (backups/)\&quot; as D4\n\n&#39; Flow 1: Auth\nUser --&gt; P1 : (1) Login Request (HTTPS POST)\nP1 --&gt; User : (2) Session Cookie (HttpOnly, Secure)\nP1 --&gt; D1 : Query User Hash/Salt (Argon2id)\nP1 --&gt; P4 : Trigger Auth Event Log\n\n&#39; Flow 2: Messaging\nUser --&gt; P2 : (3) Send Message (Socket.IO / HTTPS + CSRF)\nP2 --&gt; User : (4) Broadcast Message / ACK\nP2 --&gt; D1 : Validate Session &amp; Group Membership\nP2 --&gt; D1 : Save Message (Parameterized SQL)\n\n&#39; Flow 3: File Handling\nUser --&gt; P3 : (5) Upload File / Download Request\nP3 --&gt; User : (6) File Stream / Denied Error\nP3 --&gt; D1 : Check File Metadata &amp; Download Rights\nP3 --&gt; D2 : Save/Read Binary File (GUID Name)\nP3 --&gt; P4 : Log Access Denied Attempts\n\n&#39; Internal Logging\nP4 --&gt; D3 : Append Audit Log (No Passwords/Tokens)\n\n&#39; Flow 5: Backup\nP5 --&gt; D1 : Read DB Records\nP5 --&gt; D2 : Read File Blobs\nP5 --&gt; D4 : Store Encrypted Backup Archives\n\n@enduml&quot;,&#xa;  &quot;config&quot;: null&#xa;}" id="PmvYf-EgNpNVUzWCh5Wz-43">
+          <mxCell connectable="0" parent="1" style="group;transparentBounds=1;editIcon=1;lockedGroup=0;groupPadding=10;" vertex="1">
+            <mxGeometry as="geometry" />
+          </mxCell>
+        </UserObject>
+        <mxCell id="PmvYf-EgNpNVUzWCh5Wz-74" edge="1" parent="PmvYf-EgNpNVUzWCh5Wz-43" source="PmvYf-EgNpNVUzWCh5Wz-44" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;defaultLabelBackgroundColor=page;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="668.25" y="70" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <UserObject label="" plantUmlId="n_0" plantUmlBaseStyle="shape=umlActor;html=1;fillColor=#F1F1F1;strokeColor=#181818;" plantUmlBaseValue="" id="PmvYf-EgNpNVUzWCh5Wz-44">
+          <mxCell parent="PmvYf-EgNpNVUzWCh5Wz-43" style="shape=umlActor;html=1;fillColor=#F1F1F1;strokeColor=#181818;" vertex="1">
+            <mxGeometry height="54" width="40" x="647.91" y="86" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject label="User / Browser" plantUmlId="cap_1" plantUmlBaseStyle="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=top;fontSize=14;whiteSpace=wrap;part=1;" plantUmlBaseValue="User / Browser" id="PmvYf-EgNpNVUzWCh5Wz-45">
+          <mxCell parent="PmvYf-EgNpNVUzWCh5Wz-44" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=top;fontSize=14;whiteSpace=wrap;part=1;" vertex="1">
+            <mxGeometry height="22" width="112" x="-36" y="54" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject label="TRUST BOUNDARY&#xa;(Client / Server)" plantUmlId="n_2" plantUmlBaseStyle="rounded=1;absoluteArcSize=1;arcSize=5;fillColor=#F1F1F1;strokeColor=#181818;fontSize=14;whiteSpace=wrap;" plantUmlBaseValue="TRUST BOUNDARY&#xa;(Client / Server)" id="PmvYf-EgNpNVUzWCh5Wz-46">
+          <mxCell parent="PmvYf-EgNpNVUzWCh5Wz-43" style="rounded=1;absoluteArcSize=1;arcSize=5;fillColor=#F1F1F1;strokeColor=#181818;fontSize=14;whiteSpace=wrap;" vertex="1">
+            <mxGeometry height="46" width="127" x="2138.5" y="101" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject label="1.0 Authentication &amp; Session" plantUmlId="n_3" plantUmlBaseStyle="shape=cube;size=10;flipH=1;fillColor=#F1F1F1;strokeColor=#181818;fontSize=14;whiteSpace=wrap;spacingRight=10;spacingTop=9;" plantUmlBaseValue="1.0 Authentication &amp; Session" id="PmvYf-EgNpNVUzWCh5Wz-47">
+          <mxCell parent="PmvYf-EgNpNVUzWCh5Wz-43" style="shape=cube;size=10;flipH=1;fillColor=#F1F1F1;strokeColor=#181818;fontSize=14;whiteSpace=wrap;spacingRight=10;spacingTop=9;" vertex="1">
+            <mxGeometry height="49" width="222" x="465.90999999999997" y="260" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject label="2.0 Messaging Service" plantUmlId="n_4" plantUmlBaseStyle="shape=cube;size=10;flipH=1;fillColor=#F1F1F1;strokeColor=#181818;fontSize=14;whiteSpace=wrap;spacingRight=10;spacingTop=9;" plantUmlBaseValue="2.0 Messaging Service" id="PmvYf-EgNpNVUzWCh5Wz-48">
+          <mxCell parent="PmvYf-EgNpNVUzWCh5Wz-43" style="shape=cube;size=10;flipH=1;fillColor=#F1F1F1;strokeColor=#181818;fontSize=14;whiteSpace=wrap;spacingRight=10;spacingTop=9;" vertex="1">
+            <mxGeometry height="49" width="190" x="195.83" y="238" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject label="3.0 File Management" plantUmlId="n_5" plantUmlBaseStyle="shape=cube;size=10;flipH=1;fillColor=#F1F1F1;strokeColor=#181818;fontSize=14;whiteSpace=wrap;spacingRight=10;spacingTop=9;" plantUmlBaseValue="3.0 File Management" id="PmvYf-EgNpNVUzWCh5Wz-49">
+          <mxCell parent="PmvYf-EgNpNVUzWCh5Wz-43" style="shape=cube;size=10;flipH=1;fillColor=#F1F1F1;strokeColor=#181818;fontSize=14;whiteSpace=wrap;spacingRight=10;spacingTop=9;" vertex="1">
+            <mxGeometry height="49" width="174" x="1181.5" y="238" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject label="4.0 Audit Logging" plantUmlId="n_6" plantUmlBaseStyle="shape=cube;size=10;flipH=1;fillColor=#F1F1F1;strokeColor=#181818;fontSize=14;whiteSpace=wrap;spacingRight=10;spacingTop=9;" plantUmlBaseValue="4.0 Audit Logging" id="PmvYf-EgNpNVUzWCh5Wz-50">
+          <mxCell parent="PmvYf-EgNpNVUzWCh5Wz-43" style="shape=cube;size=10;flipH=1;fillColor=#F1F1F1;strokeColor=#181818;fontSize=14;whiteSpace=wrap;spacingRight=10;spacingTop=9;" vertex="1">
+            <mxGeometry height="49" width="151" x="730" y="320" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject label="5.0 Backup &amp; Recovery" plantUmlId="n_7" plantUmlBaseStyle="shape=cube;size=10;flipH=1;fillColor=#F1F1F1;strokeColor=#181818;fontSize=14;whiteSpace=wrap;spacingRight=10;spacingTop=9;" plantUmlBaseValue="5.0 Backup &amp; Recovery" id="PmvYf-EgNpNVUzWCh5Wz-51">
+          <mxCell parent="PmvYf-EgNpNVUzWCh5Wz-43" style="shape=cube;size=10;flipH=1;fillColor=#F1F1F1;strokeColor=#181818;fontSize=14;whiteSpace=wrap;spacingRight=10;spacingTop=9;" vertex="1">
+            <mxGeometry height="49" width="189" x="1780" y="120" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject label="D1: PostgreSQL DB" plantUmlId="n_8" plantUmlBaseStyle="shape=cylinder3;size=10;boundedLbl=1;backgroundOutline=1;fillColor=#F1F1F1;strokeColor=#181818;fontSize=14;whiteSpace=wrap;" plantUmlBaseValue="D1: PostgreSQL DB" id="PmvYf-EgNpNVUzWCh5Wz-52">
+          <mxCell parent="PmvYf-EgNpNVUzWCh5Wz-43" style="shape=cylinder3;size=10;boundedLbl=1;backgroundOutline=1;fillColor=#F1F1F1;strokeColor=#181818;fontSize=14;whiteSpace=wrap;" vertex="1">
+            <mxGeometry height="46" width="138" x="530" y="770" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject label="D2: Safe File Storage (uploads/)" plantUmlId="n_9" plantUmlBaseStyle="shape=cylinder3;size=10;boundedLbl=1;backgroundOutline=1;fillColor=#F1F1F1;strokeColor=#181818;fontSize=14;whiteSpace=wrap;" plantUmlBaseValue="D2: Safe File Storage (uploads/)" id="PmvYf-EgNpNVUzWCh5Wz-53">
+          <mxCell parent="PmvYf-EgNpNVUzWCh5Wz-43" style="shape=cylinder3;size=10;boundedLbl=1;backgroundOutline=1;fillColor=#F1F1F1;strokeColor=#181818;fontSize=14;whiteSpace=wrap;" vertex="1">
+            <mxGeometry height="46" width="226" x="1450.6599999999999" y="363" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject label="D3: Audit Logs (logs/)" plantUmlId="n_10" plantUmlBaseStyle="shape=cylinder3;size=10;boundedLbl=1;backgroundOutline=1;fillColor=#F1F1F1;strokeColor=#181818;fontSize=14;whiteSpace=wrap;" plantUmlBaseValue="D3: Audit Logs (logs/)" id="PmvYf-EgNpNVUzWCh5Wz-54">
+          <mxCell parent="PmvYf-EgNpNVUzWCh5Wz-43" style="shape=cylinder3;size=10;boundedLbl=1;backgroundOutline=1;fillColor=#F1F1F1;strokeColor=#181818;fontSize=14;whiteSpace=wrap;" vertex="1">
+            <mxGeometry height="46" width="159" x="824.57" y="488" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject label="D4: Encrypted Backups (backups/)" plantUmlId="n_11" plantUmlBaseStyle="shape=cylinder3;size=10;boundedLbl=1;backgroundOutline=1;fillColor=#F1F1F1;strokeColor=#181818;fontSize=14;whiteSpace=wrap;" plantUmlBaseValue="D4: Encrypted Backups (backups/)" id="PmvYf-EgNpNVUzWCh5Wz-55">
+          <mxCell parent="PmvYf-EgNpNVUzWCh5Wz-43" style="shape=cylinder3;size=10;boundedLbl=1;backgroundOutline=1;fillColor=#F1F1F1;strokeColor=#181818;fontSize=14;whiteSpace=wrap;" vertex="1">
+            <mxGeometry height="46" width="244" x="1859.5" y="363" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject label="(1) Login Request (HTTPS POST)" plantUmlId="e_12" plantUmlBaseStyle="strokeColor=#181818;fontColor=#000000;fontSize=13;html=1;labelBackgroundColor=#FFFFFF;verticalAlign=bottom;endArrow=classicThin;endFill=1;curved=1;rounded=0;endSize=6;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;" plantUmlBaseValue="(1) Login Request (HTTPS POST)" id="PmvYf-EgNpNVUzWCh5Wz-56">
+          <mxCell edge="1" parent="PmvYf-EgNpNVUzWCh5Wz-43" source="PmvYf-EgNpNVUzWCh5Wz-44" style="strokeColor=#181818;fontColor=#000000;fontSize=13;html=1;labelBackgroundColor=#FFFFFF;verticalAlign=bottom;endArrow=classicThin;endFill=1;curved=1;rounded=0;endSize=6;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;" target="PmvYf-EgNpNVUzWCh5Wz-47">
+            <mxGeometry relative="1" as="geometry">
+              <mxPoint x="100" y="11" as="offset" />
+              <Array as="points">
+                <mxPoint x="648.46" y="192" />
+              </Array>
+              <mxPoint x="659.91" y="162" as="sourcePoint" />
+              <mxPoint x="630.91" y="238" as="targetPoint" />
+            </mxGeometry>
+          </mxCell>
+        </UserObject>
+        <UserObject label="(2) Session Cookie (HttpOnly, Secure)" plantUmlId="e_13" plantUmlBaseStyle="strokeColor=#181818;fontColor=#000000;fontSize=13;html=1;labelBackgroundColor=#FFFFFF;verticalAlign=bottom;endArrow=classicThin;endFill=1;curved=1;rounded=0;endSize=6;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;" plantUmlBaseValue="(2) Session Cookie (HttpOnly, Secure)" id="PmvYf-EgNpNVUzWCh5Wz-57">
+          <mxCell edge="1" parent="PmvYf-EgNpNVUzWCh5Wz-43" source="PmvYf-EgNpNVUzWCh5Wz-47" style="strokeColor=#181818;fontColor=#000000;fontSize=13;html=1;labelBackgroundColor=#FFFFFF;verticalAlign=bottom;endArrow=classicThin;endFill=1;curved=1;rounded=0;endSize=6;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;" target="PmvYf-EgNpNVUzWCh5Wz-44">
+            <mxGeometry relative="1" as="geometry">
+              <mxPoint x="147" y="18" as="offset" />
+              <Array as="points">
+                <mxPoint x="870.96" y="192" />
+              </Array>
+              <mxPoint x="704.9100000000001" y="238" as="sourcePoint" />
+              <mxPoint x="675.91" y="162" as="targetPoint" />
+            </mxGeometry>
+          </mxCell>
+        </UserObject>
+        <UserObject label="Query User Hash/Salt (Argon2id)" plantUmlId="e_14" plantUmlBaseStyle="strokeColor=#181818;fontColor=#000000;fontSize=13;html=1;labelBackgroundColor=#FFFFFF;verticalAlign=bottom;endArrow=classicThin;endFill=1;curved=1;rounded=0;endSize=6;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;" plantUmlBaseValue="Query User Hash/Salt (Argon2id)" id="PmvYf-EgNpNVUzWCh5Wz-58">
+          <mxCell edge="1" parent="PmvYf-EgNpNVUzWCh5Wz-43" source="PmvYf-EgNpNVUzWCh5Wz-47" style="strokeColor=#181818;fontColor=#000000;fontSize=13;html=1;labelBackgroundColor=#FFFFFF;verticalAlign=bottom;endArrow=classicThin;endFill=1;curved=1;rounded=0;endSize=6;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;" target="PmvYf-EgNpNVUzWCh5Wz-52">
+            <mxGeometry relative="1" as="geometry">
+              <mxPoint x="107" y="11" as="offset" />
+              <Array as="points">
+                <mxPoint x="579" y="317" />
+              </Array>
+              <mxPoint x="630.91" y="287" as="sourcePoint" />
+              <mxPoint x="579" y="363" as="targetPoint" />
+            </mxGeometry>
+          </mxCell>
+        </UserObject>
+        <UserObject label="Trigger Auth Event Log" plantUmlId="e_15" plantUmlBaseStyle="strokeColor=#181818;fontColor=#000000;fontSize=13;html=1;labelBackgroundColor=#FFFFFF;verticalAlign=bottom;endArrow=classicThin;endFill=1;curved=1;rounded=0;endSize=6;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;" plantUmlBaseValue="Trigger Auth Event Log" id="PmvYf-EgNpNVUzWCh5Wz-59">
+          <mxCell edge="1" parent="PmvYf-EgNpNVUzWCh5Wz-43" source="PmvYf-EgNpNVUzWCh5Wz-47" style="strokeColor=#181818;fontColor=#000000;fontSize=13;html=1;labelBackgroundColor=#FFFFFF;verticalAlign=bottom;endArrow=classicThin;endFill=1;curved=1;rounded=0;endSize=6;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;" target="PmvYf-EgNpNVUzWCh5Wz-50">
+            <mxGeometry relative="1" as="geometry">
+              <mxPoint x="86" y="10" as="offset" />
+              <Array as="points">
+                <mxPoint x="816.5" y="317" />
+              </Array>
+              <mxPoint x="704.9100000000001" y="287" as="sourcePoint" />
+              <mxPoint x="878.9000000000001" y="363" as="targetPoint" />
+            </mxGeometry>
+          </mxCell>
+        </UserObject>
+        <UserObject label="(3) Send Message (Socket.IO / HTTPS + CSRF)" plantUmlId="e_16" plantUmlBaseStyle="strokeColor=#181818;fontColor=#000000;fontSize=13;html=1;labelBackgroundColor=#FFFFFF;labelPosition=right;align=left;endArrow=classicThin;endFill=1;curved=1;rounded=0;endSize=6;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;" plantUmlBaseValue="(3) Send Message (Socket.IO / HTTPS + CSRF)" id="PmvYf-EgNpNVUzWCh5Wz-60">
+          <mxCell edge="1" parent="PmvYf-EgNpNVUzWCh5Wz-43" source="PmvYf-EgNpNVUzWCh5Wz-44" style="strokeColor=#181818;fontColor=#000000;fontSize=13;html=1;labelBackgroundColor=#FFFFFF;labelPosition=right;align=left;endArrow=classicThin;endFill=1;curved=1;rounded=0;endSize=6;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;" target="PmvYf-EgNpNVUzWCh5Wz-48">
+            <mxGeometry relative="1" as="geometry">
+              <mxPoint x="-58" y="37" as="offset" />
+              <Array as="points">
+                <mxPoint x="121.46000000000001" y="192" />
+              </Array>
+              <mxPoint x="627.91" y="162" as="sourcePoint" />
+              <mxPoint x="259.16" y="238" as="targetPoint" />
+            </mxGeometry>
+          </mxCell>
+        </UserObject>
+        <UserObject label="(4) Broadcast Message / ACK" plantUmlId="e_17" plantUmlBaseStyle="strokeColor=#181818;fontColor=#000000;fontSize=13;html=1;labelBackgroundColor=#FFFFFF;labelPosition=right;align=left;endArrow=classicThin;endFill=1;curved=1;rounded=0;endSize=6;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;" plantUmlBaseValue="(4) Broadcast Message / ACK" id="PmvYf-EgNpNVUzWCh5Wz-61">
+          <mxCell edge="1" parent="PmvYf-EgNpNVUzWCh5Wz-43" source="PmvYf-EgNpNVUzWCh5Wz-48" style="strokeColor=#181818;fontColor=#000000;fontSize=13;html=1;labelBackgroundColor=#FFFFFF;labelPosition=right;align=left;endArrow=classicThin;endFill=1;curved=1;rounded=0;endSize=6;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;" target="PmvYf-EgNpNVUzWCh5Wz-44">
+            <mxGeometry relative="1" as="geometry">
+              <mxPoint x="40" y="27" as="offset" />
+              <Array as="points">
+                <mxPoint x="434.96000000000004" y="192" />
+              </Array>
+              <mxPoint x="322.5" y="238" as="sourcePoint" />
+              <mxPoint x="643.91" y="162" as="targetPoint" />
+            </mxGeometry>
+          </mxCell>
+        </UserObject>
+        <UserObject label="Validate Session &amp;amp; Group Membership" plantUmlId="e_18" plantUmlBaseStyle="strokeColor=#181818;fontColor=#000000;fontSize=13;html=1;labelBackgroundColor=#FFFFFF;labelPosition=right;align=left;endArrow=classicThin;endFill=1;curved=1;rounded=0;endSize=6;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;" plantUmlBaseValue="Validate Session &amp;amp; Group Membership" id="PmvYf-EgNpNVUzWCh5Wz-62">
+          <mxCell edge="1" parent="PmvYf-EgNpNVUzWCh5Wz-43" source="PmvYf-EgNpNVUzWCh5Wz-48" style="strokeColor=#181818;fontColor=#000000;fontSize=13;html=1;labelBackgroundColor=#FFFFFF;labelPosition=right;align=left;endArrow=classicThin;endFill=1;curved=1;rounded=0;endSize=6;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;" target="PmvYf-EgNpNVUzWCh5Wz-52">
+            <mxGeometry relative="1" as="geometry">
+              <mxPoint x="-27" y="-12" as="offset" />
+              <Array as="points">
+                <mxPoint x="50" y="317" />
+              </Array>
+              <mxPoint x="259.16" y="287" as="sourcePoint" />
+              <mxPoint x="533" y="363" as="targetPoint" />
+            </mxGeometry>
+          </mxCell>
+        </UserObject>
+        <UserObject label="Save Message (Parameterized SQL)" plantUmlId="e_19" plantUmlBaseStyle="strokeColor=#181818;fontColor=#000000;fontSize=13;html=1;labelBackgroundColor=#FFFFFF;labelPosition=right;align=left;endArrow=classicThin;endFill=1;curved=1;rounded=0;endSize=6;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;" plantUmlBaseValue="Save Message (Parameterized SQL)" id="PmvYf-EgNpNVUzWCh5Wz-63">
+          <mxCell edge="1" parent="PmvYf-EgNpNVUzWCh5Wz-43" source="PmvYf-EgNpNVUzWCh5Wz-48" style="strokeColor=#181818;fontColor=#000000;fontSize=13;html=1;labelBackgroundColor=#FFFFFF;labelPosition=right;align=left;endArrow=classicThin;endFill=1;curved=1;rounded=0;endSize=6;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;" target="PmvYf-EgNpNVUzWCh5Wz-52">
+            <mxGeometry relative="1" as="geometry">
+              <mxPoint x="44" y="-13" as="offset" />
+              <Array as="points">
+                <mxPoint x="322.5" y="317" />
+              </Array>
+              <mxPoint x="322.5" y="287" as="sourcePoint" />
+              <mxPoint x="556" y="363" as="targetPoint" />
+            </mxGeometry>
+          </mxCell>
+        </UserObject>
+        <UserObject label="(5) Upload File / Download Request" plantUmlId="e_20" plantUmlBaseStyle="strokeColor=#181818;fontColor=#000000;fontSize=13;html=1;labelBackgroundColor=#FFFFFF;verticalAlign=bottom;endArrow=classicThin;endFill=1;curved=1;rounded=0;endSize=6;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;" plantUmlBaseValue="(5) Upload File / Download Request" id="PmvYf-EgNpNVUzWCh5Wz-64">
+          <mxCell edge="1" parent="PmvYf-EgNpNVUzWCh5Wz-43" source="PmvYf-EgNpNVUzWCh5Wz-44" style="strokeColor=#181818;fontColor=#000000;fontSize=13;html=1;labelBackgroundColor=#FFFFFF;verticalAlign=bottom;endArrow=classicThin;endFill=1;curved=1;rounded=0;endSize=6;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;" target="PmvYf-EgNpNVUzWCh5Wz-49">
+            <mxGeometry relative="1" as="geometry">
+              <mxPoint x="289" y="37" as="offset" />
+              <Array as="points">
+                <mxPoint x="1133.46" y="192" />
+              </Array>
+              <mxPoint x="691.9100000000001" y="162" as="sourcePoint" />
+              <mxPoint x="1239.5" y="238" as="targetPoint" />
+            </mxGeometry>
+          </mxCell>
+        </UserObject>
+        <UserObject label="(6) File Stream / Denied Error" plantUmlId="e_21" plantUmlBaseStyle="strokeColor=#181818;fontColor=#000000;fontSize=13;html=1;labelBackgroundColor=#FFFFFF;verticalAlign=bottom;endArrow=classicThin;endFill=1;curved=1;rounded=0;endSize=6;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;" plantUmlBaseValue="(6) File Stream / Denied Error" id="PmvYf-EgNpNVUzWCh5Wz-65">
+          <mxCell edge="1" parent="PmvYf-EgNpNVUzWCh5Wz-43" source="PmvYf-EgNpNVUzWCh5Wz-49" style="strokeColor=#181818;fontColor=#000000;fontSize=13;html=1;labelBackgroundColor=#FFFFFF;verticalAlign=bottom;endArrow=classicThin;endFill=1;curved=1;rounded=0;endSize=6;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;" target="PmvYf-EgNpNVUzWCh5Wz-44">
+            <mxGeometry relative="1" as="geometry">
+              <mxPoint x="405" y="42" as="offset" />
+              <Array as="points">
+                <mxPoint x="1383.96" y="192" />
+                <mxPoint x="1268.5" y="76.54" />
+              </Array>
+              <mxPoint x="1297.5" y="238" as="sourcePoint" />
+              <mxPoint x="707.9100000000001" y="162" as="targetPoint" />
+            </mxGeometry>
+          </mxCell>
+        </UserObject>
+        <UserObject label="Check File Metadata &amp;amp; Download Rights" plantUmlId="e_22" plantUmlBaseStyle="strokeColor=#181818;fontColor=#000000;fontSize=13;html=1;labelBackgroundColor=#FFFFFF;verticalAlign=bottom;endArrow=classicThin;endFill=1;curved=1;rounded=0;endSize=6;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;" plantUmlBaseValue="Check File Metadata &amp;amp; Download Rights" id="PmvYf-EgNpNVUzWCh5Wz-66">
+          <mxCell edge="1" parent="PmvYf-EgNpNVUzWCh5Wz-43" source="PmvYf-EgNpNVUzWCh5Wz-49" style="strokeColor=#181818;fontColor=#000000;fontSize=13;html=1;labelBackgroundColor=#FFFFFF;verticalAlign=bottom;endArrow=classicThin;endFill=1;curved=1;rounded=0;endSize=6;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;" target="PmvYf-EgNpNVUzWCh5Wz-52">
+            <mxGeometry relative="1" as="geometry">
+              <mxPoint x="207" y="-5" as="offset" />
+              <Array as="points">
+                <mxPoint x="991" y="317" />
+              </Array>
+              <mxPoint x="1225" y="287" as="sourcePoint" />
+              <mxPoint x="602" y="363" as="targetPoint" />
+            </mxGeometry>
+          </mxCell>
+        </UserObject>
+        <UserObject label="Save/Read Binary File (GUID Name)" plantUmlId="e_23" plantUmlBaseStyle="strokeColor=#181818;fontColor=#000000;fontSize=13;html=1;labelBackgroundColor=#FFFFFF;labelPosition=right;align=left;endArrow=classicThin;endFill=1;curved=1;rounded=0;endSize=6;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;" plantUmlBaseValue="Save/Read Binary File (GUID Name)" id="PmvYf-EgNpNVUzWCh5Wz-67">
+          <mxCell edge="1" parent="PmvYf-EgNpNVUzWCh5Wz-43" source="PmvYf-EgNpNVUzWCh5Wz-49" style="strokeColor=#181818;fontColor=#000000;fontSize=13;html=1;labelBackgroundColor=#FFFFFF;labelPosition=right;align=left;endArrow=classicThin;endFill=1;curved=1;rounded=0;endSize=6;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;" target="PmvYf-EgNpNVUzWCh5Wz-53">
+            <mxGeometry relative="1" as="geometry">
+              <mxPoint x="161" y="17" as="offset" />
+              <Array as="points">
+                <mxPoint x="1494.52" y="317" />
+              </Array>
+              <mxPoint x="1312" y="287" as="sourcePoint" />
+              <mxPoint x="1526" y="363" as="targetPoint" />
+            </mxGeometry>
+          </mxCell>
+        </UserObject>
+        <UserObject label="Log Access Denied Attempts" plantUmlId="e_24" plantUmlBaseStyle="strokeColor=#181818;fontColor=#000000;fontSize=13;html=1;labelBackgroundColor=#FFFFFF;verticalAlign=bottom;endArrow=classicThin;endFill=1;curved=1;rounded=0;endSize=6;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;" plantUmlBaseValue="Log Access Denied Attempts" id="PmvYf-EgNpNVUzWCh5Wz-68">
+          <mxCell edge="1" parent="PmvYf-EgNpNVUzWCh5Wz-43" source="PmvYf-EgNpNVUzWCh5Wz-49" style="strokeColor=#181818;fontColor=#000000;fontSize=13;html=1;labelBackgroundColor=#FFFFFF;verticalAlign=bottom;endArrow=classicThin;endFill=1;curved=1;rounded=0;endSize=6;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;" target="PmvYf-EgNpNVUzWCh5Wz-50">
+            <mxGeometry relative="1" as="geometry">
+              <mxPoint x="225" y="-17" as="offset" />
+              <Array as="points">
+                <mxPoint x="1268.5" y="317" />
+              </Array>
+              <mxPoint x="1268.5" y="287" as="sourcePoint" />
+              <mxPoint x="929.23" y="363" as="targetPoint" />
+            </mxGeometry>
+          </mxCell>
+        </UserObject>
+        <UserObject label="Append Audit Log (No Passwords/Tokens)" plantUmlId="e_25" plantUmlBaseStyle="strokeColor=#181818;fontColor=#000000;fontSize=13;html=1;labelBackgroundColor=#FFFFFF;labelPosition=right;align=left;endArrow=classicThin;endFill=1;curved=0;rounded=0;endSize=6;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;" plantUmlBaseValue="Append Audit Log (No Passwords/Tokens)" id="PmvYf-EgNpNVUzWCh5Wz-69">
+          <mxCell edge="1" parent="PmvYf-EgNpNVUzWCh5Wz-43" source="PmvYf-EgNpNVUzWCh5Wz-50" style="strokeColor=#181818;fontColor=#000000;fontSize=13;html=1;labelBackgroundColor=#FFFFFF;labelPosition=right;align=left;endArrow=classicThin;endFill=1;curved=0;rounded=0;endSize=6;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;" target="PmvYf-EgNpNVUzWCh5Wz-54">
+            <mxGeometry relative="1" as="geometry">
+              <mxPoint x="141" as="offset" />
+            </mxGeometry>
+          </mxCell>
+        </UserObject>
+        <UserObject label="Read DB Records" plantUmlId="e_26" plantUmlBaseStyle="strokeColor=#181818;fontColor=#000000;fontSize=13;html=1;labelBackgroundColor=#FFFFFF;verticalAlign=bottom;endArrow=classicThin;endFill=1;curved=1;rounded=0;endSize=6;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;" plantUmlBaseValue="Read DB Records" id="PmvYf-EgNpNVUzWCh5Wz-70">
+          <mxCell edge="1" parent="PmvYf-EgNpNVUzWCh5Wz-43" source="PmvYf-EgNpNVUzWCh5Wz-51" style="strokeColor=#181818;fontColor=#000000;fontSize=13;html=1;labelBackgroundColor=#FFFFFF;verticalAlign=bottom;endArrow=classicThin;endFill=1;curved=1;rounded=0;endSize=6;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;" target="PmvYf-EgNpNVUzWCh5Wz-52">
+            <mxGeometry relative="1" as="geometry">
+              <mxPoint x="558" y="-22" as="offset" />
+              <Array as="points">
+                <mxPoint x="1723.5" y="317" />
+              </Array>
+              <mxPoint x="1810.75" y="287" as="sourcePoint" />
+              <mxPoint x="625" y="363" as="targetPoint" />
+            </mxGeometry>
+          </mxCell>
+        </UserObject>
+        <UserObject label="Read File Blobs" plantUmlId="e_27" plantUmlBaseStyle="strokeColor=#181818;fontColor=#000000;fontSize=13;html=1;labelBackgroundColor=#FFFFFF;labelPosition=right;align=left;endArrow=classicThin;endFill=1;curved=1;rounded=0;endSize=6;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;" plantUmlBaseValue="Read File Blobs" id="PmvYf-EgNpNVUzWCh5Wz-71">
+          <mxCell edge="1" parent="PmvYf-EgNpNVUzWCh5Wz-43" source="PmvYf-EgNpNVUzWCh5Wz-51" style="strokeColor=#181818;fontColor=#000000;fontSize=13;html=1;labelBackgroundColor=#FFFFFF;labelPosition=right;align=left;endArrow=classicThin;endFill=1;curved=1;rounded=0;endSize=6;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;" target="PmvYf-EgNpNVUzWCh5Wz-53">
+            <mxGeometry relative="1" as="geometry">
+              <mxPoint x="149" y="-12" as="offset" />
+              <Array as="points">
+                <mxPoint x="1878.52" y="317" />
+              </Array>
+              <mxPoint x="1858" y="287" as="sourcePoint" />
+              <mxPoint x="1601.33" y="363" as="targetPoint" />
+            </mxGeometry>
+          </mxCell>
+        </UserObject>
+        <UserObject label="Store Encrypted Backup Archives" plantUmlId="e_28" plantUmlBaseStyle="strokeColor=#181818;fontColor=#000000;fontSize=13;html=1;labelBackgroundColor=#FFFFFF;labelPosition=right;align=left;endArrow=classicThin;endFill=1;curved=1;rounded=0;endSize=6;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;" plantUmlBaseValue="Store Encrypted Backup Archives" id="PmvYf-EgNpNVUzWCh5Wz-72">
+          <mxCell edge="1" parent="PmvYf-EgNpNVUzWCh5Wz-43" source="PmvYf-EgNpNVUzWCh5Wz-51" style="strokeColor=#181818;fontColor=#000000;fontSize=13;html=1;labelBackgroundColor=#FFFFFF;labelPosition=right;align=left;endArrow=classicThin;endFill=1;curved=1;rounded=0;endSize=6;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;" target="PmvYf-EgNpNVUzWCh5Wz-55">
+            <mxGeometry relative="1" as="geometry">
+              <mxPoint x="128" y="14" as="offset" />
+              <Array as="points">
+                <mxPoint x="1981.5" y="317" />
+              </Array>
+              <mxPoint x="1905.25" y="287" as="sourcePoint" />
+              <mxPoint x="1981.5" y="363" as="targetPoint" />
+            </mxGeometry>
+          </mxCell>
+        </UserObject>
+        <UserObject label="Data Flow Diagram (DFD Level 1) - Chatio System" plantUmlId="title_29" plantUmlBaseStyle="text;html=1;fillColor=none;strokeColor=none;fontSize=14;fontStyle=1;fontColor=#000000;align=center;verticalAlign=middle;" plantUmlBaseValue="Data Flow Diagram (DFD Level 1) - Chatio System" id="PmvYf-EgNpNVUzWCh5Wz-73">
+          <mxCell parent="PmvYf-EgNpNVUzWCh5Wz-43" style="text;html=1;fillColor=none;strokeColor=none;fontSize=14;fontStyle=1;fontColor=#000000;align=center;verticalAlign=middle;" vertex="1">
+            <mxGeometry height="24" width="353" x="1054.16" y="50" as="geometry" />
+          </mxCell>
+        </UserObject>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
