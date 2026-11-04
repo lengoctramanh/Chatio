@@ -29,6 +29,8 @@ services:
       PGDATABASE: chatio
       PGUSER: chatio_app
       PGPASSWORD: ${PG_APP_PASSWORD:?Set PG_APP_PASSWORD in .env}
+      CSRF_SECRET: ${CSRF_SECRET:?Set CSRF_SECRET in .env}
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
     ports:
       - "127.0.0.1:3000:3000"
     depends_on:
