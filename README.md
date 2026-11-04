@@ -190,6 +190,58 @@ DBeaver có thể kết nối PostgreSQL khi phát triển với host `localhost
 
 Bộ khung ở trên phục vụ chạy thử cục bộ. Khi triển khai theo SRS, cần HTTPS, cookie an toàn, tài khoản CSDL quyền tối thiểu, kiểm tra quyền ở backend và sao lưu mã hóa.
 
+## Xác thực, phiên và phân quyền
+
+Chi tiết API và cách dùng middleware: [docs/api/auth.md](docs/api/auth.md).
+
+### Cấu hình
+
+Thêm vào `.env` (xem `.env.example`):
+
+```dotenv
+CSRF_SECRET=chuoi_ngau_nhien_toi_thieu_32_ky_tu
+TEST_DATABASE_URL=postgresql://postgres:<mat_khau_admin_da_url_encode>@localhost:5432/chatio_test
+```
+
+Tạo `CSRF_SECRET` bằng lệnh `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"`. Backend không khởi động nếu thiếu biến này.
+
+### Quyền CSDL cho `chatio_app`
+
+Nếu bảng do `postgres` sở hữu, chạy trong DBeaver (user `postgres`, database `chatio`):
+
+```sql
+GRANT SELECT, INSERT, UPDATE ON users, sessions TO chatio_app;
+GRANT SELECT, INSERT ON audit_logs TO chatio_app;  -- không UPDATE/DELETE nhật ký (SEC-07)
+```
+
+### Tạo tài khoản admin đầu tiên
+
+Không có đăng ký công khai, nên admin đầu tiên được tạo bằng script (mật khẩu nhập ẩn, tối thiểu 15 ký tự):
+
+```powershell
+Set-Location backend
+npm.cmd install
+npm.cmd run db:migrate
+npm.cmd run create-admin -- admin
+```
+
+Lần đăng nhập đầu, tài khoản phải đổi mật khẩu qua `POST /api/auth/change-password`. Sau đó admin tạo tài khoản khác qua `POST /api/auth/register`.
+
+### Kiểm thử
+
+Test dùng CSDL riêng `chatio_test` (tên phải kết thúc bằng `_test` vì test xóa dữ liệu) và tự chạy migration. Tạo một lần trong DBeaver bằng user `postgres`:
+
+```sql
+CREATE DATABASE chatio_test;
+```
+
+Chạy test (cần container `db` đang chạy):
+
+```powershell
+Set-Location backend
+npm.cmd test
+```
+
 ## Quy trình nộp code
 
 Không commit trực tiếp lên `main`. Sau khi kiểm tra bộ khung chạy được, chỉ thêm các file mã nguồn và cấu hình không chứa bí mật:
