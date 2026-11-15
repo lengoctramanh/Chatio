@@ -7,7 +7,7 @@
 | Lệnh | `cd backend && npm test` |
 | Lần chạy 1 – 04/11/2026 | Windows, Node.js LTS, PostgreSQL 18 (Docker): **26/26 đạt** (#1–#26) |
 | Lần chạy 2 – 15/11/2026 | Bổ sung TC42, TC56. Linux, Node.js 22, PostgreSQL 16, Chrome 153: **41/41 đạt** |
-| Lần chạy 3 – _(ngày)_ | _(chạy lại `npm test` trên máy Windows/PostgreSQL 18 và điền kết quả)_ |
+| Lần chạy 3 – 15/11/2026 | Windows, Node.js 26, PostgreSQL 18 (Docker): **41/41 đạt** (#1–#26, TC42, TC56), khoảng 7,3 giây |
 | Người kiểm tra độc lập | _(thành viên review điền)_ |
 
 Định danh tài khoản: nhóm đã chốt dùng **username**, không yêu cầu email.
