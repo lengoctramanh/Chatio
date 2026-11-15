@@ -2,12 +2,15 @@ import cookieParser from 'cookie-parser';
 import express from 'express';
 import { pool } from './db/pool.js';
 import { sendError } from './lib/httpError.js';
+import { rejectCrossSiteRequests } from './middleware/sameOrigin.js';
 import { adminRouter } from './routes/admin.js';
 import { authRouter } from './routes/auth.js';
 
 export const app = express();
 
 app.disable('x-powered-by');
+// Chặn request thay đổi dữ liệu từ trang web khác trước khi đọc body (chống CSRF, kể cả login CSRF).
+app.use('/api', rejectCrossSiteRequests);
 app.use(express.json({ limit: '16kb' }));
 app.use(cookieParser());
 

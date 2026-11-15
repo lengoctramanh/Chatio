@@ -192,7 +192,9 @@ Bộ khung ở trên phục vụ chạy thử cục bộ. Khi triển khai theo 
 
 ## Xác thực, phiên và phân quyền
 
-Chi tiết API và cách dùng middleware: [docs/api/auth.md](docs/api/auth.md).
+Chi tiết API và cách dùng middleware: [docs/api/auth.md](docs/api/auth.md). Báo cáo kiểm thử: [docs/testing/task5-auth-test-report.md](docs/testing/task5-auth-test-report.md).
+
+Tài khoản được định danh bằng `username`, không dùng email (nhóm đã chốt).
 
 ### Cấu hình
 
@@ -204,6 +206,8 @@ TEST_DATABASE_URL=postgresql://postgres:<mat_khau_admin_da_url_encode>@localhost
 ```
 
 Tạo `CSRF_SECRET` bằng lệnh `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"`. Backend không khởi động nếu thiếu biến này.
+
+`ALLOWED_ORIGINS` (tùy chọn) là danh sách origin của frontend được phép gửi request thay đổi dữ liệu, cách nhau bằng dấu phẩy. Mặc định là `http://localhost:5173` (Vite). Khi triển khai, đặt thành địa chỉ thật của website, ví dụ `https://chat.noi-bo.local`.
 
 ### Quyền CSDL cho `chatio_app`
 

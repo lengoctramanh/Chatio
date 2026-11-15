@@ -16,9 +16,17 @@ if (csrfSecret.length < 32) {
   throw new Error('CSRF_SECRET phải được đặt trong .env và dài ít nhất 32 ký tự');
 }
 
+// Origin của frontend được phép gửi request thay đổi dữ liệu (chống CSRF, kể cả login CSRF).
+// Mặc định là Vite dev server; khi triển khai, đặt ALLOWED_ORIGINS=https://chat.noi-bo.local
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173')
+  .split(',')
+  .map((origin) => origin.trim().replace(/\/+$/, ''))
+  .filter(Boolean);
+
 export const config = Object.freeze({
   isProduction,
   port: toInt(process.env.PORT, 3000),
+  allowedOrigins,
 
   session: {
     cookieName: 'chatio_sid',

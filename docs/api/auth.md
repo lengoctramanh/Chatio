@@ -4,13 +4,22 @@ Theo SRS: FR-01, SEC-01, SEC-02, SEC-03, SEC-04, ACC-01 → ACC-04.
 
 ## Thiết kế
 
+- **Định danh tài khoản bằng `username`:** nhóm đã chốt dùng username, không yêu cầu và không lưu email. Username dài 3–50 ký tự, chỉ gồm chữ, số và `. _ -`, không được trùng (ràng buộc `UNIQUE` trong bảng `users`).
 - **Phiên lưu trong CSDL** (bảng `sessions`), không dùng JWT. Khi đăng nhập, backend sinh token ngẫu nhiên 32 byte, đặt vào cookie `chatio_sid` (`HttpOnly`, `Secure`, `SameSite=Strict`). CSDL chỉ lưu SHA-256 của token.
 - **Hết hạn:** sau 15 phút không hoạt động (`last_activity_at`, tự gia hạn mỗi request), và tối đa 8 giờ kể từ lúc đăng nhập (`expires_at`).
 - **Thu hồi:** đặt `revoked_at`. Đăng xuất thu hồi phiên hiện tại; đổi mật khẩu thu hồi mọi phiên của user. Phiên của tài khoản có `status` khác `active` bị từ chối ngay ở request kế tiếp.
 - **Không có `/auth/refresh`:** phiên trong CSDL tự gia hạn khi người dùng còn hoạt động nên không cần cặp access/refresh token.
 - **Mật khẩu:** Argon2id, tối thiểu 15 ký tự.
 - **Chống dò mật khẩu:** tối đa 5 lần sai/tài khoản và 20 lần sai/IP trong 15 phút, vượt quá trả `429` kèm `Retry-After`. Bộ đếm nằm trong bộ nhớ tiến trình (đủ cho một instance backend).
-- **CSRF:** mọi request thay đổi dữ liệu (trừ login) phải gửi header `X-CSRF-Token`. Token lấy từ response của `/login` hoặc `/me`, gắn với phiên hiện tại.
+- **CSRF, hai lớp:**
+  1. Mọi request `POST/PUT/PATCH/DELETE` tới `/api` đến từ trang web khác đều bị chặn bằng `403 CROSS_SITE_REQUEST`, **kể cả `/login`** (chống login CSRF). Điều kiện chặn: trình duyệt gửi `Sec-Fetch-Site: cross-site`, hoặc `Origin` là `null`, hoặc `Origin` không phải origin của backend và không nằm trong `ALLOWED_ORIGINS` (mặc định `http://localhost:5173`). Lần bị chặn được ghi `ACCESS_DENIED`.
+  2. Request đã có phiên phải gửi thêm header `X-CSRF-Token`. Token lấy từ response của `/login` hoặc `/me`, gắn với phiên hiện tại.
+  - Ngoài ra `/login`, `/register`, `/change-password` chỉ nhận `Content-Type: application/json` (`415` nếu khác), nên form HTML của trang khác không gửi được dữ liệu hợp lệ. Backend không bật CORS nên trang khác cũng không gửi được JSON kèm cookie.
+- **Chống SQL Injection:** mọi truy vấn dùng tham số `$1, $2…` của `pg`, không ghép chuỗi. Ví dụ tìm tài khoản khi đăng nhập (`src/models/user.js`):
+  ```js
+  db.query(`SELECT ... FROM users WHERE username = $1`, [username]);
+  ```
+  Mật khẩu không bao giờ được đưa vào câu SQL; nó chỉ được so với `password_hash` bằng Argon2.
 - **Không đăng ký công khai:** `/auth/register` chỉ dành cho admin. Tài khoản mới có `must_change_password = true`.
 - **Nhật ký:** ghi `LOGIN`, `LOGOUT`, `PASSWORD_CHANGE`, `ACCOUNT_CREATE`, `ACCESS_DENIED` vào `audit_logs`. Không ghi mật khẩu, token hay hash.
 
@@ -35,7 +44,9 @@ Theo SRS: FR-01, SEC-01, SEC-02, SEC-03, SEC-04, ACC-01 → ACC-04.
 
 - `200`: set cookie `chatio_sid`, trả `{ user, csrfToken, expiresAt }`. Nếu `user.mustChangePassword` là `true`, frontend chuyển sang trang đổi mật khẩu.
 - `400`: thiếu username/password.
-- `401 INVALID_CREDENTIALS`: sai thông tin, tài khoản không tồn tại hoặc bị khóa (cùng một thông báo).
+- `401 INVALID_CREDENTIALS`: sai thông tin, tài khoản không tồn tại hoặc bị khóa (cùng một thông báo). Username chứa câu lệnh SQL cũng chỉ được xử lý như một username không tồn tại.
+- `403 CROSS_SITE_REQUEST`: request đến từ trang web khác (login CSRF).
+- `415 UNSUPPORTED_MEDIA_TYPE`: body không phải JSON.
 - `429 TOO_MANY_ATTEMPTS`: vượt giới hạn thử sai.
 
 ### `POST /api/auth/logout`
@@ -74,6 +85,7 @@ router.post('/messages', requireAuth, requireCsrf, handler);           // thay �
 router.post('/admin/users/:id/lock', requireAuth, requireRole('admin'), requireCsrf, handler);
 ```
 
+- Không cần tự chặn request từ trang khác: `rejectCrossSiteRequests` đã áp dụng cho toàn bộ `/api` trong `src/app.js`.
 - Sau `requireAuth`: `req.user = { id, username, role, status, mustChangePassword }`, `req.sessionId`.
 - `requireAuth` trả `401` khi không có phiên hợp lệ, `403 PASSWORD_CHANGE_REQUIRED` khi tài khoản chưa đổi mật khẩu lần đầu.
 - `requireRole('admin')` trả `403` và ghi `ACCESS_DENIED` vào nhật ký.

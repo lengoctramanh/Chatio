@@ -20,6 +20,7 @@ import {
   sessionCookieOptions,
 } from '../lib/sessions.js';
 import { requireAuth, requireCsrf, requireRole, requireSession } from '../middleware/auth.js';
+import { requireJsonBody } from '../middleware/sameOrigin.js';
 import {
   ROLES,
   USERNAME_PATTERN,
@@ -39,7 +40,7 @@ const INVALID_LOGIN_MESSAGE = 'Thông tin đăng nhập không chính xác';
  * POST /api/auth/register — quản trị viên tạo tài khoản (ACC-01).
  * Không có đăng ký công khai: yêu cầu phiên admin + CSRF.
  */
-authRouter.post('/register', requireAuth, requireRole('admin'), requireCsrf, async (req, res) => {
+authRouter.post('/register', requireAuth, requireRole('admin'), requireCsrf, requireJsonBody, async (req, res) => {
   const { username, password, role = 'user' } = req.body ?? {};
 
   if (typeof username !== 'string' || !USERNAME_PATTERN.test(username)) {
@@ -72,8 +73,14 @@ authRouter.post('/register', requireAuth, requireRole('admin'), requireCsrf, asy
   }
 });
 
-/** POST /api/auth/login — đăng nhập bằng username + password, tạo phiên trong CSDL. */
-authRouter.post('/login', async (req, res) => {
+/**
+ * POST /api/auth/login — đăng nhập bằng username + password, tạo phiên trong CSDL.
+ * Chống login CSRF: rejectCrossSiteRequests (app.js) chặn request từ trang khác,
+ * requireJsonBody chặn form HTML (urlencoded/multipart/text/plain).
+ * Chống SQL Injection: username chỉ được truyền vào truy vấn dưới dạng tham số $1
+ * (xem findUserByUsernameWithHash), mật khẩu không bao giờ đi vào SQL.
+ */
+authRouter.post('/login', requireJsonBody, async (req, res) => {
   const { username, password } = req.body ?? {};
   const ip = req.ip;
 
@@ -160,7 +167,7 @@ authRouter.get('/me', requireSession, async (req, res) => {
  * POST /api/auth/change-password — đổi mật khẩu, thu hồi mọi phiên, yêu cầu đăng nhập lại.
  * Cho phép cả tài khoản đang bị buộc đổi mật khẩu lần đầu.
  */
-authRouter.post('/change-password', requireSession, requireCsrf, async (req, res) => {
+authRouter.post('/change-password', requireSession, requireCsrf, requireJsonBody, async (req, res) => {
   const { currentPassword, newPassword } = req.body ?? {};
 
   const row = await findUserByIdWithHash(req.user.id);
