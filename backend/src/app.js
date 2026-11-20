@@ -5,6 +5,7 @@ import { sendError } from './lib/httpError.js';
 import { rejectCrossSiteRequests } from './middleware/sameOrigin.js';
 import { adminRouter } from './routes/admin.js';
 import { authRouter } from './routes/auth.js';
+import { conversationsRouter } from './routes/conversations.js';
 
 export const app = express();
 
@@ -30,7 +31,7 @@ app.get('/api/db-health', async (_req, res) => {
 
 app.use('/api/auth', authRouter);
 app.use('/api/admin', adminRouter);
-
+app.use('/api/conversations', conversationsRouter);
 app.use('/api', (_req, res) => sendError(res, 404, 'NOT_FOUND', 'Không tìm thấy API'));
 
 // Express 5 tự chuyển lỗi của handler async vào đây.
