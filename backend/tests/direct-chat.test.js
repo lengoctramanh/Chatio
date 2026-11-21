@@ -317,15 +317,27 @@ describe('Task 6A: kiểm tra quyền và phiên', () => {
     }
   });
 
-  test('chưa tích hợp Task 6B: group dù là thành viên cũng không gửi được', async () => {
+  test('hàm dùng chung từ chối gửi nhóm nếu không truyền authorizeGroupSend; qua API thì gửi được', async () => {
+    const { assertCanSendMessage } = await import('../src/services/conversationPermissions.js');
     const alice = await user('alice');
     const { rows } = await pool.query(
-      "INSERT INTO conversations (type, created_by) VALUES ('group',$1) RETURNING id", [alice.id]
+      "INSERT INTO conversations (type, name, created_by) VALUES ('group', 'Test Group', $1) RETURNING id",
+      [alice.id]
     );
-    await pool.query('INSERT INTO conversation_members (conversation_id,user_id) VALUES ($1,$2)', [rows[0].id, alice.id]);
-    const res = await send(alice, rows[0].id, 'not yet');
-    assert.equal(res.status, 403);
-    assert.equal(res.body.error.code, 'GROUP_NOT_ENABLED');
-    assert.equal(await count('messages'), 0);
+    await pool.query(
+      "INSERT INTO conversation_members (conversation_id, user_id, member_role) VALUES ($1, $2, 'owner')",
+      [rows[0].id, alice.id]
+    );
+
+    // Gọi trực tiếp không có callback -> vẫn bị chặn
+    await assert.rejects(
+      () => assertCanSendMessage(pool, rows[0].id, alice.id),
+      (err) => err.code === 'GROUP_NOT_ENABLED'
+    );
+
+    // Gọi qua API đã tích hợp authorizeGroupSend -> thành công
+    const res = await send(alice, rows[0].id, 'group enabled');
+    assert.equal(res.status, 201);
+    assert.equal(await count('messages'), 1);
   });
 });

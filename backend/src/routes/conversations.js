@@ -1,13 +1,21 @@
 import { Router } from 'express';
-import { pool } from '../db/pool.js';
 import { writeAudit } from '../lib/audit.js';
 import { sendError } from '../lib/httpError.js';
 import { requireAuth, requireCsrf } from '../middleware/auth.js';
 import { requireJsonBody } from '../middleware/sameOrigin.js';
 import { ChatError, badInput } from '../services/chatErrors.js';
+import { authorizeGroupSend } from '../services/conversationPermissions.js';
 import {
-  getMyConversation, listMyConversations, openDirectConversation,
+  getMyConversation,
+  listMyConversations,
+  openDirectConversation,
 } from '../services/directConversations.js';
+import {
+  addGroupMember,
+  createGroupConversation,
+  listGroupMembers,
+  removeGroupMember,
+} from '../services/groupConversations.js';
 import { sendTextMessage } from '../services/messageService.js';
 
 export const conversationsRouter = Router();
@@ -16,7 +24,6 @@ conversationsRouter.use(requireAuth);
 const respondToChatError = async (error, req, res, action) => {
   if (error instanceof ChatError) {
     if (error.status === 403 || error.status === 404) {
-      // Không log body, tên token, cookie hoặc đoạn text; tránh cả query string.
       await writeAudit({
         actorUserId: req.user.id,
         eventType: 'ACCESS_DENIED',
@@ -28,8 +35,7 @@ const respondToChatError = async (error, req, res, action) => {
     if (error.status === 429) res.set('Retry-After', '60');
     return sendError(res, error.status, error.code, error.message);
   }
-  // PostgreSQL có thể chứa dữ liệu trong error.detail: tuyệt đối không in error ra log.
-  console.error(`Task 6A: ${action} failed`);
+  console.error(`Conversation error [${action}]`);
   return sendError(res, 500, 'INTERNAL_ERROR', 'Không thể hoàn tất yêu cầu');
 };
 
@@ -46,7 +52,27 @@ conversationsRouter.post('/direct', requireCsrf, requireJsonBody, async (req, re
   }
 });
 
-/** GET /api/conversations: chỉ chat riêng mình tham gia. */
+/** POST /api/conversations/groups, body { name, memberIds }. */
+conversationsRouter.post('/groups', requireCsrf, requireJsonBody, async (req, res) => {
+  try {
+    if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
+      throw badInput();
+    }
+    const result = await createGroupConversation(
+      req.user.id,
+      {
+        name: req.body.name,
+        memberIds: req.body.memberIds ?? [],
+      },
+      req.ip
+    );
+    return res.status(201).json(result);
+  } catch (error) {
+    return respondToChatError(error, req, res, 'create_group');
+  }
+});
+
+/** GET /api/conversations: danh sách chat riêng và nhóm mình còn là thành viên. */
 conversationsRouter.get('/', async (req, res) => {
   try {
     return res.json({ conversations: await listMyConversations(req.user.id) });
@@ -55,7 +81,7 @@ conversationsRouter.get('/', async (req, res) => {
   }
 });
 
-/** GET /api/conversations/:id: metadata, CHƯA có lịch sử tin. */
+/** GET /api/conversations/:id: metadata hội thoại (riêng hoặc nhóm). */
 conversationsRouter.get('/:id', async (req, res) => {
   try {
     const conversation = await getMyConversation(req.user.id, req.params.id);
@@ -65,19 +91,52 @@ conversationsRouter.get('/:id', async (req, res) => {
   }
 });
 
+/** GET /api/conversations/:id/members: xem danh sách thành viên nhóm. */
+conversationsRouter.get('/:id/members', async (req, res) => {
+  try {
+    const result = await listGroupMembers(req.user.id, req.params.id);
+    return res.json(result);
+  } catch (error) {
+    return respondToChatError(error, req, res, 'list_group_members');
+  }
+});
+
+/** POST /api/conversations/:id/members, body { userId }: chủ nhóm thêm thành viên. */
+conversationsRouter.post('/:id/members', requireCsrf, requireJsonBody, async (req, res) => {
+  try {
+    if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
+      throw badInput();
+    }
+    const result = await addGroupMember(req.user.id, req.params.id, req.body.userId, req.ip);
+    return res.status(201).json(result);
+  } catch (error) {
+    return respondToChatError(error, req, res, 'add_group_member');
+  }
+});
+
+/** DELETE /api/conversations/:id/members/:userId: chủ nhóm xóa thành viên (cập nhật left_at). */
+conversationsRouter.delete('/:id/members/:userId', requireCsrf, async (req, res) => {
+  try {
+    const result = await removeGroupMember(req.user.id, req.params.id, req.params.userId, req.ip);
+    return res.json(result);
+  } catch (error) {
+    return respondToChatError(error, req, res, 'remove_group_member');
+  }
+});
+
 /** POST /api/conversations/:id/messages, body {conversationId?,clientMsgId,bodyText}. */
 conversationsRouter.post('/:id/messages', requireCsrf, requireJsonBody, async (req, res) => {
   try {
     if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) throw badInput();
-    // Giữ tương thích cả 2 cách client gửi ID; không cho hai ID bất nhất.
     if (req.body.conversationId !== undefined && req.body.conversationId !== req.params.id) {
       throw badInput('conversationId không trùng với ID trên đường dẫn');
     }
     const result = await sendTextMessage({
-      senderId: req.user.id, // KHÔNG lấy senderId, sender_id, role từ body
+      senderId: req.user.id,
       conversationId: req.params.id,
       clientMsgId: req.body.clientMsgId,
       bodyText: req.body.bodyText,
+      authorizeGroupSend,
     });
     return res.status(result.created ? 201 : 200).json(result);
   } catch (error) {

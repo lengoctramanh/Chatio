@@ -5,6 +5,7 @@ import { assertCanViewConversation } from './conversationPermissions.js';
 const publicConversation = (row) => ({
   id: row.id,
   type: row.type,
+  name: row.name ?? null,
   status: row.status,
   createdBy: row.created_by,
   createdAt: row.created_at,
@@ -31,7 +32,6 @@ export const openDirectConversation = async (creatorUserId, peerUserId) => {
   const [low, high] = [creator, peer].sort();
 
   return withTransaction(async (db) => {
-    // Lock hai user theo thứ tự ổn định; kiểm tra tài khoản ngay lúc tạo.
     const { rows: users } = await db.query(
       'SELECT id, status FROM users WHERE id = ANY($1::uuid[]) ORDER BY id FOR UPDATE',
       [[low, high]]
@@ -39,10 +39,9 @@ export const openDirectConversation = async (creatorUserId, peerUserId) => {
     if (users.length !== 2 || users.some((user) => user.status !== 'active')) {
       throw new ChatError(404, 'PEER_NOT_AVAILABLE', 'Tài khoản nhận không tồn tại hoặc không hoạt động');
     }
-    // Khóa transaction theo cặp; hoạt động qua nhiều process/node server.
     await db.query('SELECT pg_advisory_xact_lock(hashtextextended($1, 0))', [`direct:${low}:${high}`]);
     const { rows: old } = await db.query(
-      `SELECT c.id, c.type, c.status, c.created_by, c.created_at
+      `SELECT c.id, c.type, c.name, c.status, c.created_by, c.created_at
          FROM direct_conversation_pairs p JOIN conversations c ON c.id = p.conversation_id
         WHERE p.user_low = $1 AND p.user_high = $2`,
       [low, high]
@@ -56,7 +55,7 @@ export const openDirectConversation = async (creatorUserId, peerUserId) => {
     const { rows: created } = await db.query(
       `INSERT INTO conversations (type, status, created_by)
        VALUES ('direct', 'active', $1)
-       RETURNING id, type, status, created_by, created_at`,
+       RETURNING id, type, name, status, created_by, created_at`,
       [creator]
     );
     const conversationId = created[0].id;
@@ -77,10 +76,10 @@ export const openDirectConversation = async (creatorUserId, peerUserId) => {
   });
 };
 
-/** Hiện chỉ trả chat riêng; giữ shape {conversations:[...]} để Task 6B thêm type=group. */
+/** Trả về cả chat riêng và các nhóm mà người dùng hiện đang là thành viên (left_at IS NULL). */
 export const listMyConversations = async (userId) => {
   const { rows } = await pool.query(
-    `SELECT c.id, c.type, c.status, c.created_by, c.created_at,
+    `SELECT c.id, c.type, c.name, c.status, c.created_by, c.created_at,
        COALESCE(json_agg(json_build_object(
          'userId', peer.user_id, 'username', u.username, 'memberRole', peer.member_role
        ) ORDER BY u.username), '[]'::json) AS members
@@ -89,7 +88,7 @@ export const listMyConversations = async (userId) => {
           AND mine.user_id = $1 AND mine.left_at IS NULL
        JOIN conversation_members peer ON peer.conversation_id = c.id AND peer.left_at IS NULL
        JOIN users u ON u.id = peer.user_id
-      WHERE c.type = 'direct' AND c.status = 'active'
+      WHERE c.type IN ('direct', 'group') AND c.status = 'active'
       GROUP BY c.id
       ORDER BY c.created_at DESC`,
     [userId]
@@ -97,7 +96,7 @@ export const listMyConversations = async (userId) => {
   return rows.map(publicConversation);
 };
 
-/** Metadata một chat; không bao gồm lịch sử hoặc nội dung tin. */
+/** Metadata một hội thoại (riêng hoặc nhóm); không bao gồm lịch sử hoặc nội dung tin. */
 export const getMyConversation = async (userId, conversationId) => {
   const row = await assertCanViewConversation(pool, conversationId, userId);
   return publicConversation({ ...row, members: await membersFor(pool, row.id) });
