@@ -53,7 +53,7 @@ export const requireRole =
         eventType: 'ACCESS_DENIED',
         outcome: 'failure',
         ip: req.ip,
-        metadata: { method: req.method, path: req.originalUrl, requiredRole: roles.join(',') },
+        metadata: { method: req.method, path: req.path, requiredRole: roles.join(',') },
       });
       return sendError(res, 403, 'FORBIDDEN', 'Bạn không có quyền thực hiện thao tác này');
     }
