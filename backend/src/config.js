@@ -10,6 +10,13 @@ const toInt = (value, fallback) => {
 };
 
 const isProduction = process.env.NODE_ENV === 'production';
+const appPublicUrl = new URL(
+  process.env.APP_PUBLIC_URL || 'https://chat.congty.local'
+);
+
+if (appPublicUrl.protocol !== 'https:') {
+  throw new Error('APP_PUBLIC_URL phải sử dụng HTTPS');
+}
 
 const csrfSecret = process.env.CSRF_SECRET ?? '';
 if (csrfSecret.length < 32) {
@@ -25,6 +32,7 @@ const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173')
 
 export const config = Object.freeze({
   isProduction,
+  appPublicUrl: appPublicUrl.origin,
   port: toInt(process.env.PORT, 3000),
   allowedOrigins,
 

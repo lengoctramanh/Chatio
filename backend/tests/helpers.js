@@ -9,9 +9,8 @@ const testUrl = process.env.TEST_DATABASE_URL;
 if (!testUrl) {
   throw new Error('Chưa đặt TEST_DATABASE_URL trong .env (xem README, mục Kiểm thử)');
 }
-if (!new URL(testUrl).pathname.endsWith('_test')) {
-  // Test sẽ xóa dữ liệu; chặn chạy nhầm vào CSDL chính.
-  throw new Error('TEST_DATABASE_URL phải trỏ tới CSDL có tên kết thúc bằng _test');
+if (new URL(testUrl).pathname !== '/chatio_test') {
+  throw new Error('TEST_DATABASE_URL phải trỏ đúng tới CSDL chatio_test');
 }
 
 process.env.DATABASE_URL = testUrl;
@@ -39,8 +38,23 @@ export { app, pool };
 export const PASSWORD = 'correct-horse-battery-staple';
 
 export const resetDatabase = async () => {
-  resetLoginLimiter();
-  await pool.query('TRUNCATE audit_logs, sessions, users RESTART IDENTITY CASCADE');
+  const client = await pool.connect();
+
+  try {
+    const { rows } = await client.query('SELECT current_database()');
+
+    if (rows[0].current_database !== 'chatio_test') {
+      throw new Error('Chỉ được phép reset database chatio_test');
+    }
+
+    resetLoginLimiter();
+
+    await client.query(
+      'TRUNCATE audit_logs, sessions, users RESTART IDENTITY CASCADE'
+    );
+  } finally {
+    client.release();
+  }
 };
 
 /** Tạo user trực tiếp trong CSDL (bỏ qua API) để chuẩn bị dữ liệu test. */
